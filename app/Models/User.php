@@ -37,4 +37,8 @@ class User extends Model implements
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+     public function wedding()  
+    {
+        return $this->hasOne(Wedding::class);
+    }
 }

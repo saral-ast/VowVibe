@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Plus, Mail, Phone, Users, Filter, Download, MoreHorizontal, Heart, Check, X, Clock, ChevronDown, ChevronRight, UserPlus, Edit2, Trash2, Save } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
@@ -165,6 +165,17 @@ export default function GuestManagement() {
   const [selectedGuestForMember, setSelectedGuestForMember] = useState<string>('');
   const [guestFormData, setGuestFormData] = useState<Partial<Guest>>({});
   const [memberFormData, setMemberFormData] = useState<Partial<FamilyMember>>({});
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const filteredGuests = guests.filter(guest => {
     const matchesSearch = guest.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -564,8 +575,516 @@ export default function GuestManagement() {
     </div>
   );
 
+  // Mobile Card View (existing implementation)
+  const MobileCardView = () => (
+    <Card className="bg-card border-border">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+          Guest List ({filteredGuests.length})
+        </CardTitle>
+        <CardDescription>Click on any guest to view family members</CardDescription>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="space-y-1">
+          {filteredGuests.map((guest) => {
+            const isExpanded = expandedGuests.has(guest.id);
+            const totalFamilyMembers = guest.familyMembers.length;
+            
+            return (
+              <div key={guest.id} className="border border-border rounded-lg overflow-hidden">
+                {/* Main Guest Row - Mobile Optimized */}
+                <div className="p-4 hover:bg-accent/50 transition-colors">
+                  <div className="space-y-3">
+                    {/* Top Row: Avatar, Name, Expand Button */}
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        {totalFamilyMembers > 0 && (
+                          <button 
+                            onClick={() => toggleGuestExpansion(guest.id)}
+                            className="touch-target flex items-center justify-center w-8 h-8 rounded hover:bg-accent/50"
+                          >
+                            {isExpanded ? (
+                              <ChevronDown className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                            ) : (
+                              <ChevronRight className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                            )}
+                          </button>
+                        )}
+                        {totalFamilyMembers === 0 && <div className="w-8 h-8" />}
+                        <Avatar className="w-10 h-10">
+                          <AvatarFallback className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+                            {guest.name.split(' ').map(n => n[0]).join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <h4 className="font-medium text-foreground">{guest.name}</h4>
+                          {totalFamilyMembers > 0 && (
+                            <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
+                              <UserPlus className="w-3 h-3 mr-1" />
+                              +{totalFamilyMembers}
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="text-sm text-muted-foreground">{guest.role}</div>
+                      </div>
+                      
+                      {/* Actions - Mobile Optimized */}
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openAddMember(guest.id)}
+                          className="touch-target w-10 h-10 p-0 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30"
+                        >
+                          <UserPlus className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openEditGuest(guest)}
+                          className="touch-target w-10 h-10 p-0 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="touch-target w-10 h-10 p-0 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Guest</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete "{guest.name}" and all their family members? This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDeleteGuest(guest.id)}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </div>
+
+                    {/* Second Row: Contact & Info */}
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 pl-10 sm:pl-12">
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground min-w-0">
+                        <Mail className="w-3 h-3 flex-shrink-0" />
+                        <span className="truncate">{guest.email}</span>
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge variant="outline" className={
+                          guest.side === 'bride' 
+                            ? 'border-pink-200 dark:border-pink-800 text-pink-700 dark:text-pink-300 bg-pink-50 dark:bg-pink-950/30' 
+                            : 'border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/30'
+                        }>
+                          {guest.side === 'bride' ? "Bride's Side" : "Groom's Side"}
+                        </Badge>
+                        {guest.plusOne && (
+                          <Badge className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 hover:bg-blue-100 dark:hover:bg-blue-900/30">
+                            <Heart className="w-3 h-3 mr-1" />
+                            Plus One
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Third Row: RSVP Status */}
+                    <div className="flex items-center gap-2 pl-10 sm:pl-12">
+                      {getRSVPIcon(guest.rsvpStatus)}
+                      {getRSVPBadge(guest.rsvpStatus)}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Expanded Family Members - Mobile Optimized */}
+                {isExpanded && totalFamilyMembers > 0 && (
+                  <div className="border-t border-border bg-accent/20">
+                    <div className="p-4">
+                      <h5 className="font-medium text-sm text-foreground mb-3 flex items-center gap-2">
+                        <Users className="w-4 h-4" />
+                        Family Members ({totalFamilyMembers})
+                      </h5>
+                      <div className="space-y-3">
+                        {guest.familyMembers.map((member) => (
+                          <div key={member.id} className="p-3 bg-card rounded-lg border border-border">
+                            <div className="space-y-2">
+                              {/* Member Header */}
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                  <Avatar className="w-8 h-8 flex-shrink-0">
+                                    <AvatarFallback className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs">
+                                      {member.name.split(' ').map(n => n[0]).join('')}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className="font-medium text-sm text-foreground">{member.name}</span>
+                                      <Badge variant="outline" className="text-xs bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
+                                        {member.relationship}
+                                      </Badge>
+                                      {member.age && (
+                                        <span className="text-xs text-muted-foreground">Age {member.age}</span>
+                                      )}
+                                    </div>
+                                    {member.dietaryRestrictions && (
+                                      <div className="text-xs text-muted-foreground mt-1">
+                                        Dietary: {member.dietaryRestrictions}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                                
+                                {/* Member Actions */}
+                                <div className="flex items-center gap-1 flex-shrink-0">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => openEditMember(member, guest.id)}
+                                    className="touch-target w-8 h-8 p-0 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30"
+                                  >
+                                    <Edit2 className="w-3 h-3" />
+                                  </Button>
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="touch-target w-8 h-8 p-0 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>Delete Family Member</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          Are you sure you want to delete "{member.name}"?
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction
+                                          onClick={() => handleDeleteFamilyMember(guest.id, member.id)}
+                                          className="bg-red-600 hover:bg-red-700"
+                                        >
+                                          Delete
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </div>
+                              </div>
+                              
+                              {/* Member RSVP */}
+                              <div className="flex items-center gap-2 pl-11">
+                                {getRSVPIcon(member.rsvpStatus)}
+                                <div className="text-xs">
+                                  {getRSVPBadge(member.rsvpStatus)}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {filteredGuests.length === 0 && (
+          <div className="text-center py-12">
+            <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+            <p className="text-muted-foreground">No guests found matching your search</p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+
+  // Desktop Table View
+  const DesktopTableView = () => (
+    <Card className="bg-card border-border">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+          Guest List ({filteredGuests.length})
+        </CardTitle>
+        <CardDescription>Comprehensive view of all wedding guests and their family members</CardDescription>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent border-border">
+                <TableHead className="w-8"></TableHead>
+                <TableHead className="font-semibold">Guest</TableHead>
+                <TableHead className="font-semibold">Contact</TableHead>
+                <TableHead className="font-semibold">Side</TableHead>
+                <TableHead className="font-semibold">Group</TableHead>
+                <TableHead className="font-semibold">RSVP</TableHead>
+                <TableHead className="font-semibold">Plus One</TableHead>
+                <TableHead className="font-semibold">Family</TableHead>
+                <TableHead className="font-semibold text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredGuests.map((guest) => {
+                const isExpanded = expandedGuests.has(guest.id);
+                const totalFamilyMembers = guest.familyMembers.length;
+                
+                return (
+                  <React.Fragment key={guest.id}>
+                    {/* Main Guest Row */}
+                    <TableRow className="hover:bg-accent/50 transition-colors border-border">
+                      <TableCell className="w-8">
+                        {totalFamilyMembers > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleGuestExpansion(guest.id)}
+                            className="w-6 h-6 p-0 hover:bg-accent/50"
+                          >
+                            {isExpanded ? (
+                              <ChevronDown className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                            ) : (
+                              <ChevronRight className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                            )}
+                          </Button>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="w-8 h-8">
+                            <AvatarFallback className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs">
+                              {guest.name.split(' ').map(n => n[0]).join('')}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="font-medium text-foreground">{guest.name}</div>
+                            <div className="text-sm text-muted-foreground">{guest.role}</div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1 text-sm">
+                            <Mail className="w-3 h-3 text-muted-foreground" />
+                            <span className="text-foreground">{guest.email}</span>
+                          </div>
+                          {guest.phone && (
+                            <div className="flex items-center gap-1 text-sm">
+                              <Phone className="w-3 h-3 text-muted-foreground" />
+                              <span className="text-muted-foreground">{guest.phone}</span>
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={
+                          guest.side === 'bride' 
+                            ? 'border-pink-200 dark:border-pink-800 text-pink-700 dark:text-pink-300 bg-pink-50 dark:bg-pink-950/30' 
+                            : 'border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/30'
+                        }>
+                          {guest.side === 'bride' ? "Bride's" : "Groom's"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-foreground">{guest.group}</span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {getRSVPIcon(guest.rsvpStatus)}
+                          {getRSVPBadge(guest.rsvpStatus)}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {guest.plusOne && (
+                          <Badge className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 hover:bg-blue-100 dark:hover:bg-blue-900/30">
+                            <Heart className="w-3 h-3 mr-1" />
+                            Plus One
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {totalFamilyMembers > 0 && (
+                          <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
+                            <UserPlus className="w-3 h-3 mr-1" />
+                            {totalFamilyMembers} Member{totalFamilyMembers > 1 ? 's' : ''}
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openAddMember(guest.id)}
+                            className="w-8 h-8 p-0 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30"
+                          >
+                            <UserPlus className="w-3 h-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openEditGuest(guest)}
+                            className="w-8 h-8 p-0 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30"
+                          >
+                            <Edit2 className="w-3 h-3" />
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="w-8 h-8 p-0 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Guest</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete "{guest.name}" and all their family members? This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDeleteGuest(guest.id)}
+                                  className="bg-red-600 hover:bg-red-700"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+
+                    {/* Expanded Family Members Rows */}
+                    {isExpanded && totalFamilyMembers > 0 && guest.familyMembers.map((member) => (
+                      <TableRow key={member.id} className="bg-accent/20 hover:bg-accent/30 transition-colors border-border">
+                        <TableCell></TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-3 pl-4">
+                            <div className="w-px h-4 bg-border"></div>
+                            <Avatar className="w-6 h-6">
+                              <AvatarFallback className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs">
+                                {member.name.split(' ').map(n => n[0]).join('')}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="font-medium text-sm text-foreground">{member.name}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {member.relationship}
+                                {member.age && ` • Age ${member.age}`}
+                              </div>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {member.dietaryRestrictions && (
+                            <div className="text-xs text-muted-foreground">
+                              Dietary: {member.dietaryRestrictions}
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-xs bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
+                            Family
+                          </Badge>
+                        </TableCell>
+                        <TableCell></TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {getRSVPIcon(member.rsvpStatus)}
+                            {getRSVPBadge(member.rsvpStatus)}
+                          </div>
+                        </TableCell>
+                        <TableCell></TableCell>
+                        <TableCell></TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openEditMember(member, guest.id)}
+                              className="w-6 h-6 p-0 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30"
+                            >
+                              <Edit2 className="w-2 h-2" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="w-6 h-6 p-0 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
+                                >
+                                  <Trash2 className="w-2 h-2" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete Family Member</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete "{member.name}"?
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDeleteFamilyMember(guest.id, member.id)}
+                                    className="bg-red-600 hover:bg-red-700"
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </React.Fragment>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+
+        {filteredGuests.length === 0 && (
+          <div className="text-center py-12">
+            <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+            <p className="text-muted-foreground">No guests found matching your search</p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 bg-background min-h-screen">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -711,248 +1230,8 @@ export default function GuestManagement() {
         </CardContent>
       </Card>
 
-      {/* Guest List with Expandable Rows - Mobile Optimized */}
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-            Guest List ({filteredGuests.length})
-          </CardTitle>
-          <CardDescription>Click on any guest to view family members</CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="space-y-1">
-            {filteredGuests.map((guest) => {
-              const isExpanded = expandedGuests.has(guest.id);
-              const totalFamilyMembers = guest.familyMembers.length;
-              
-              return (
-                <div key={guest.id} className="border border-border rounded-lg overflow-hidden">
-                  {/* Main Guest Row - Mobile Optimized */}
-                  <div className="p-4 hover:bg-accent/50 transition-colors">
-                    <div className="space-y-3">
-                      {/* Top Row: Avatar, Name, Expand Button */}
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2">
-                          {totalFamilyMembers > 0 && (
-                            <button 
-                              onClick={() => toggleGuestExpansion(guest.id)}
-                              className="touch-target flex items-center justify-center w-8 h-8 rounded hover:bg-accent/50"
-                            >
-                              {isExpanded ? (
-                                <ChevronDown className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                              ) : (
-                                <ChevronRight className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                              )}
-                            </button>
-                          )}
-                          {totalFamilyMembers === 0 && <div className="w-8 h-8" />}
-                          <Avatar className="w-10 h-10">
-                            <AvatarFallback className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
-                              {guest.name.split(' ').map(n => n[0]).join('')}
-                            </AvatarFallback>
-                          </Avatar>
-                        </div>
-                        
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <h4 className="font-medium text-foreground">{guest.name}</h4>
-                            {totalFamilyMembers > 0 && (
-                              <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
-                                <UserPlus className="w-3 h-3 mr-1" />
-                                +{totalFamilyMembers}
-                              </Badge>
-                            )}
-                          </div>
-                          <div className="text-sm text-muted-foreground">{guest.role}</div>
-                        </div>
-                        
-                        {/* Actions - Mobile Optimized */}
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openAddMember(guest.id)}
-                            className="touch-target w-10 h-10 p-0 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30"
-                          >
-                            <UserPlus className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openEditGuest(guest)}
-                            className="touch-target w-10 h-10 p-0 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="touch-target w-10 h-10 p-0 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Delete Guest</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Are you sure you want to delete "{guest.name}" and all their family members? This action cannot be undone.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleDeleteGuest(guest.id)}
-                                  className="bg-red-600 hover:bg-red-700"
-                                >
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </div>
-
-                      {/* Second Row: Contact & Info */}
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 pl-10 sm:pl-12">
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground min-w-0">
-                          <Mail className="w-3 h-3 flex-shrink-0" />
-                          <span className="truncate">{guest.email}</span>
-                        </div>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <Badge variant="outline" className={
-                            guest.side === 'bride' 
-                              ? 'border-pink-200 dark:border-pink-800 text-pink-700 dark:text-pink-300 bg-pink-50 dark:bg-pink-950/30' 
-                              : 'border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/30'
-                          }>
-                            {guest.side === 'bride' ? "Bride's Side" : "Groom's Side"}
-                          </Badge>
-                          {guest.plusOne && (
-                            <Badge className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 hover:bg-blue-100 dark:hover:bg-blue-900/30">
-                              <Heart className="w-3 h-3 mr-1" />
-                              Plus One
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Third Row: RSVP Status */}
-                      <div className="flex items-center gap-2 pl-10 sm:pl-12">
-                        {getRSVPIcon(guest.rsvpStatus)}
-                        {getRSVPBadge(guest.rsvpStatus)}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Expanded Family Members - Mobile Optimized */}
-                  {isExpanded && totalFamilyMembers > 0 && (
-                    <div className="border-t border-border bg-accent/20">
-                      <div className="p-4">
-                        <h5 className="font-medium text-sm text-foreground mb-3 flex items-center gap-2">
-                          <Users className="w-4 h-4" />
-                          Family Members ({totalFamilyMembers})
-                        </h5>
-                        <div className="space-y-3">
-                          {guest.familyMembers.map((member) => (
-                            <div key={member.id} className="p-3 bg-card rounded-lg border border-border">
-                              <div className="space-y-2">
-                                {/* Member Header */}
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                                    <Avatar className="w-8 h-8 flex-shrink-0">
-                                      <AvatarFallback className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs">
-                                        {member.name.split(' ').map(n => n[0]).join('')}
-                                      </AvatarFallback>
-                                    </Avatar>
-                                    <div className="min-w-0 flex-1">
-                                      <div className="flex items-center gap-2 flex-wrap">
-                                        <span className="font-medium text-sm text-foreground">{member.name}</span>
-                                        <Badge variant="outline" className="text-xs bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
-                                          {member.relationship}
-                                        </Badge>
-                                        {member.age && (
-                                          <span className="text-xs text-muted-foreground">Age {member.age}</span>
-                                        )}
-                                      </div>
-                                      {member.dietaryRestrictions && (
-                                        <div className="text-xs text-muted-foreground mt-1">
-                                          Dietary: {member.dietaryRestrictions}
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                  
-                                  {/* Member Actions */}
-                                  <div className="flex items-center gap-1 flex-shrink-0">
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => openEditMember(member, guest.id)}
-                                      className="touch-target w-8 h-8 p-0 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30"
-                                    >
-                                      <Edit2 className="w-3 h-3" />
-                                    </Button>
-                                    <AlertDialog>
-                                      <AlertDialogTrigger asChild>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          className="touch-target w-8 h-8 p-0 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
-                                        >
-                                          <Trash2 className="w-3 h-3" />
-                                        </Button>
-                                      </AlertDialogTrigger>
-                                      <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                          <AlertDialogTitle>Delete Family Member</AlertDialogTitle>
-                                          <AlertDialogDescription>
-                                            Are you sure you want to delete "{member.name}"?
-                                          </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                          <AlertDialogAction
-                                            onClick={() => handleDeleteFamilyMember(guest.id, member.id)}
-                                            className="bg-red-600 hover:bg-red-700"
-                                          >
-                                            Delete
-                                          </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                      </AlertDialogContent>
-                                    </AlertDialog>
-                                  </div>
-                                </div>
-                                
-                                {/* Member RSVP */}
-                                <div className="flex items-center gap-2 pl-11">
-                                  {getRSVPIcon(member.rsvpStatus)}
-                                  <div className="text-xs">
-                                    {getRSVPBadge(member.rsvpStatus)}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {filteredGuests.length === 0 && (
-            <div className="text-center py-12">
-              <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-              <p className="text-muted-foreground">No guests found matching your search</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Responsive Guest List */}
+      {isMobile ? <MobileCardView /> : <DesktopTableView />}
     </div>
   );
 }
