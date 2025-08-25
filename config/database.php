@@ -16,7 +16,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'mongodb'),
+    'default' => env('DB_CONNECTION', 'mongodb'),   
 
     /*
     |--------------------------------------------------------------------------
@@ -113,7 +113,7 @@ return [
         ],
         'mongodb' => [
             'driver' => 'mongodb',
-            'dsn' => env('MONGODB_URI'),
+            'dsn' => env('DB_DSN'),
             'database' => env('MONGODB_DATABASE', 'wedding_management'),
         ],
 
