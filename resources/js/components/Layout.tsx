@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Home, Users, DollarSign, Calendar, CheckSquare, User, Moon, Sun } from 'lucide-react';
 import { Button } from './ui/button';
 import { Link, usePage } from '@inertiajs/react';
+import { PageProps } from '@/types';
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
-// Add the 'href' property for Inertia Links
 const navigationItems = [
   { id: 'dashboard', label: 'Dashboard', icon: Home, href: '/dashboard' },
   { id: 'guests', label: 'Guests', icon: Users, href: '/guests' },
@@ -17,8 +17,12 @@ const navigationItems = [
 ];
 
 export default function Layout({ children }: LayoutProps) {
-  const { url } = usePage(); // Get the current URL from Inertia
+  // Logic from the first layout - getting auth data with proper typing
+  const { props, url } = usePage<PageProps>();
+  const { auth } = props;
+  const { user } = auth;
 
+  // UI state management from both layouts
   const [isMobile, setIsMobile] = useState(false);
   const [isDark, setIsDark] = useState(false);
 
@@ -46,6 +50,7 @@ export default function Layout({ children }: LayoutProps) {
     document.documentElement.classList.toggle('dark', newIsDark);
   };
 
+  // Mobile layout from the second UI
   if (isMobile) {
     return (
       <div className="bg-background min-h-screen">
@@ -75,7 +80,6 @@ export default function Layout({ children }: LayoutProps) {
         </header>
 
         {/* Mobile Content */}
-        {/* Added padding-bottom to prevent content from being hidden by the fixed nav */}
         <main className="p-4 pb-24 bg-background">
           {children}
         </main>
@@ -107,12 +111,13 @@ export default function Layout({ children }: LayoutProps) {
     );
   }
 
-  // --- DESKTOP VIEW ---
+  // Desktop layout - UI from second, logic from first
   return (
     <div className="min-h-screen bg-background">
       <header className="bg-background border-b border-border sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
+            {/* Logo section */}
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center">
                 <Home className="w-6 h-6 text-white" />
@@ -123,6 +128,7 @@ export default function Layout({ children }: LayoutProps) {
               </div>
             </div>
 
+            {/* Navigation */}
             <nav className="flex items-center gap-1">
               {navigationItems.map((item) => {
                 const Icon = item.icon;
@@ -144,6 +150,7 @@ export default function Layout({ children }: LayoutProps) {
               })}
             </nav>
 
+            {/* User section - combining both approaches */}
             <div className="flex items-center gap-4">
               <Button variant="ghost" size="sm" onClick={toggleTheme} className="w-8 h-8 p-0">
                 {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -152,10 +159,27 @@ export default function Layout({ children }: LayoutProps) {
                 <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
                   <User className="w-4 h-4 text-white" />
                 </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium text-foreground">Sarah & Mike</p>
-                  <p className="text-xs text-muted-foreground">June 15, 2024</p>
-                </div>
+                {/* Logic from first layout - dynamic wedding data */}
+                {user?.wedding ? (
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-foreground">
+                      {user.wedding.bride_name} & {user.wedding.groom_name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(user.wedding.wedding_date).toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      })}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="text-right">
+                    {/* Fallback if wedding data is not available */}
+                    <p className="text-sm font-medium text-foreground">{user?.name || 'User'}</p>
+                    <p className="text-xs text-muted-foreground">Welcome</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

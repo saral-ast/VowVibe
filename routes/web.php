@@ -12,22 +12,23 @@ use Inertia\Inertia;
 
 // Publicly accessible welcome page
 Route::get('/', function () {
-    return Inertia::render('dashboard', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
-});
+     if(auth()->user()){
+        return redirect()->route('dashboard');
+     }
+     return redirect()->route('login');
+})->name('home');
 
 // Routes that require a user to be logged in
 Route::middleware(['auth', 'verified'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('home');
      Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    // Guest Management
-    Route::get('/guests', [GuestController::class, 'index'])->name('guests');
-    
+    // Guest Management Routes
+        Route::get('/guests', [GuestController::class, 'index'])->name('guests');
+        Route::post('/guests', [GuestController::class, 'store'])->name('guests.store');
+        Route::put('/guests/{guest}', [GuestController::class, 'update'])->name('guests.update');
+        Route::delete('/guests/{guest}', [GuestController::class, 'destroy'])->name('guests.destroy');
+
     // Budget Tracking
     Route::get('/budget', [BudgetController::class, 'index'])->name('budget');
     

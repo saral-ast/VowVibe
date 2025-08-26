@@ -18,9 +18,8 @@ return new class extends Migration
             $collection->string('phone')->nullable();
             $collection->enum('side', ['bride', 'groom']);
             $collection->string('group'); // Family, Friends, Work Colleagues, etc.
-            $collection->string('role'); // Bridesmaid, Best Man, Uncle, etc.
             $collection->string('invite_status')->default('pending');
-            $collection->boolean('plus_one')->default(false);
+            $collection->integer('members_count')->default(1);
             $collection->text('dietary_restrictions')->nullable();
             $collection->timestamps();
         });
@@ -32,6 +31,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('guests_collection');
+        Schema::dropIfExists('guests');
     }
 };

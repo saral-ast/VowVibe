@@ -1,4 +1,3 @@
-// resources/js/hooks/use-theme.ts
 import { useState, useEffect } from 'react';
 
 export function useTheme() {
@@ -9,12 +8,7 @@ export function useTheme() {
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         const shouldBeDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
         setIsDark(shouldBeDark);
-
-        if (shouldBeDark) {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
+        document.documentElement.classList.toggle('dark', shouldBeDark);
     }, []);
 
     const toggleTheme = () => {

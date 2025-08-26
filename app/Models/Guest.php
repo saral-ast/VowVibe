@@ -10,27 +10,26 @@ class Guest extends Model
     protected $connection = 'mongodb';
     protected $collection = 'guests';
 
-      protected $casts = [
-        'plus_one' => 'boolean',
-        'family_members' => 'array',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-    ];
-
-
+    // Use snake_case to match your migration file
     protected $fillable = [
         'wedding_id',
         'name',
         'email',
+        'phone',
         'side',
         'group',
         'role',
         'invite_status',
-        'plusOne',
-        'dietaryRestrictions',
-        'family_members',
+        'plus_one',
+        'members_count',
+        'dietary_restrictions',
     ];
-   
+
+    // This tells Eloquent how to handle specific data types
+    protected $casts = [
+        'plus_one' => 'boolean',
+        'members_count' => 'integer',
+    ];
 
     public function wedding(): BelongsTo
     {
