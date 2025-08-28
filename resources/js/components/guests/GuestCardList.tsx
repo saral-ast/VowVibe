@@ -1,12 +1,11 @@
-// src/components/guests/GuestCardList.tsx
-
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Edit2, Heart, Mail, Phone, Trash2, Users, Check, X, Clock } from 'lucide-react';
+import { Edit2, Mail, Trash2, Users, Phone, User, Heart, ChevronDown, ChevronUp } from 'lucide-react';
 import { Guest } from '@/types/guest.types';
+import { cn } from '@/lib/utils';
 
 interface GuestCardListProps {
   guests: Guest[];
@@ -16,14 +15,6 @@ interface GuestCardListProps {
 
 const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('') || '';
 
-const getRSVPIcon = (status: Guest['invite_status']) => {
-  switch (status) {
-    case 'confirmed': return <Check className="w-4 h-4 text-green-600" />;
-    case 'declined': return <X className="w-4 h-4 text-red-600" />;
-    default: return <Clock className="w-4 h-4 text-yellow-600" />;
-  }
-};
-
 const getRSVPBadge = (status: Guest['invite_status']) => {
   switch (status) {
     case 'confirmed': return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Confirmed</Badge>;
@@ -32,76 +23,102 @@ const getRSVPBadge = (status: Guest['invite_status']) => {
   }
 };
 
+const GuestCard = ({ guest, onEdit, onDelete }: { guest: Guest; onEdit: (guest: Guest) => void; onDelete: (id: string) => void }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  return (
+    <Card className="overflow-hidden">
+      <div className="p-3 flex items-center gap-3 hover:bg-accent transition-colors cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
+        <Avatar className="h-9 w-9 text-xs">
+          <AvatarFallback>{getInitials(guest.name)}</AvatarFallback>
+        </Avatar>
+
+        <div className="flex-1 overflow-hidden">
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold text-sm truncate" title={guest.name}>{guest.name}</h3>
+            {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+          </div>
+          <div className="text-xs text-muted-foreground flex items-center gap-2 truncate">
+            <Mail className="w-3 h-3 shrink-0" />
+            <span className="truncate" title={guest.email}>{guest.email}</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1 ml-auto" onClick={(e) => e.stopPropagation()}>
+          {getRSVPBadge(guest.invite_status)}
+          <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => onEdit(guest)}>
+            <Edit2 className="w-4 h-4" />
+          </Button>
+          <Button variant="ghost" size="icon" className="w-7 h-7 text-destructive" onClick={() => onDelete(guest.id)}>
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Expanded Details */}
+      <div className={cn(
+        'border-t bg-muted/30 overflow-hidden transition-all duration-300 ease-in-out',
+        isExpanded ? 'max-h-64 opacity-100' : 'max-h-0 opacity-0'
+      )}>
+        <div className="p-4 space-y-3 text-sm">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <p className="text-muted-foreground flex items-center gap-2">
+                <User className="w-4 h-4" />
+                <span>Role</span>
+              </p>
+              <p className="font-medium">{guest.role || 'Guest'}</p>
+            </div>
+            
+            <div className="space-y-1">
+              <p className="text-muted-foreground flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                <span>Side</span>
+              </p>
+              <p className="font-medium capitalize">{guest.side || 'Not specified'}</p>
+            </div>
+
+            {guest.phone && (
+              <div className="space-y-1">
+                <p className="text-muted-foreground flex items-center gap-2">
+                  <Phone className="w-4 h-4" />
+                  <span>Phone</span>
+                </p>
+                <p className="font-medium">{guest.phone}</p>
+              </div>
+            )}
+
+            {guest.members_count > 1 && (
+              <div className="space-y-1">
+                <p className="text-muted-foreground flex items-center gap-2">
+                  <Heart className="w-4 h-4 text-pink-500" />
+                  <span>Group Size</span>
+                </p>
+                <p className="font-medium">{guest.members_count} people</p>
+              </div>
+            )}
+          </div>
+
+        </div>
+      </div>
+    </Card>
+  );
+};
+
 export function GuestCardList({ guests, onEdit, onDelete }: GuestCardListProps) {
   if (guests.length === 0) {
     return (
       <div className="py-12 text-center">
         <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-        <p className="text-muted-foreground">No guests found.</p>
+        <p className="text-muted-foreground">No guests found matching your criteria.</p>
       </div>
     );
   }
 
   return (
-    <div className="p-2 space-y-3 sm:p-4">
+    <div className="p-2 space-y-2">
       {guests.map((guest) => (
-        <Card key={guest.id} className="overflow-hidden">
-          <CardContent className="p-4 space-y-4">
-            <div className="flex items-start gap-4">
-              <Avatar className="w-10 h-10"><AvatarFallback>{getInitials(guest.name)}</AvatarFallback></Avatar>
-              <div className="flex-1">
-                <h3 className="font-semibold text-foreground">{guest.name}</h3>
-                <p className="text-sm text-muted-foreground">{guest.role}</p>
-              </div>
-              <div className="flex">
-                <Button variant="ghost" size="icon" className="w-8 h-8" onClick={() => onEdit(guest)}>
-                  <Edit2 className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="w-8 h-8 text-red-500 hover:text-red-600"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDelete(guest.id);
-                  }}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-
-            <div className="pl-14 space-y-3">
-              <div className="space-y-1 text-sm">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Mail className="w-3.5 h-3.5" />
-                  <span className="truncate">{guest.email}</span>
-                </div>
-                {guest.phone && (
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Phone className="w-3.5 h-3.5" />
-                    <span>{guest.phone}</span>
-                  </div>
-                )}
-              </div>
-              
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="flex items-center gap-1.5">
-                  {getRSVPIcon(guest.invite_status)}
-                  {getRSVPBadge(guest.invite_status)}
-                </div>
-                <Badge variant="outline" className={guest.side === 'bride' ? 'border-pink-300 text-pink-700' : 'border-blue-300 text-blue-700'}>
-                  {guest.side === 'bride' ? "Bride's Side" : "Groom's Side"}
-                </Badge>
-                {guest.members_count > 1 && (
-                  <Badge variant="outline" className="text-muted-foreground">
-                    <Heart className="w-3 h-3 mr-1.5 text-pink-500" /> {guest.members_count} Attendees
-                  </Badge>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <GuestCard key={guest.id} guest={guest} onEdit={onEdit} onDelete={onDelete} />
       ))}
     </div>
   );

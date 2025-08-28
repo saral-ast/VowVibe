@@ -28,9 +28,9 @@ export default function Dashboard({ wedding, stats, budgetData, monthlyTasks, re
     return (
         <>
             <Head title="Dashboard" />
-            <div className="p-6 space-y-6">
+            <div className="container mx-auto p-4 my-10">
                 {/* Header */}
-                <div className="text-center">
+                <div className="text-center mb-10">
                     <h1 className="text-3xl font-bold text-foreground mb-2">{wedding.bride_name} & {wedding.groom_name}'s Wedding</h1>
                     <p className="text-muted-foreground text-lg">{formattedDate}</p>
                     <div className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-blue-50 dark:bg-blue-950/30 rounded-full border border-blue-200 dark:border-blue-800">
@@ -41,7 +41,7 @@ export default function Dashboard({ wedding, stats, budgetData, monthlyTasks, re
                 </div>
 
                 {/* Main Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
                     <Card className="bg-card border-border">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium text-muted-foreground">Confirmed Guests</CardTitle>

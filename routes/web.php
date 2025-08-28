@@ -31,9 +31,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Budget Tracking
     Route::get('/budget', [BudgetController::class, 'index'])->name('budget');
+    // Budget Category Routes
+    Route::post('/budget/categories', [BudgetController::class, 'storeCategory'])->name('budget.categories.store');
+    Route::put('/budget/categories/{category}', [BudgetController::class, 'updateCategory'])->name('budget.categories.update');
+    Route::delete('/budget/categories/{category}', [BudgetController::class, 'destroyCategory'])->name('budget.categories.destroy');
+
+    // Expense Routes
+    Route::post('/budget/expenses', [BudgetController::class, 'storeExpense'])->name('budget.expenses.store');
+    Route::put('/budget/expenses/{expense}', [BudgetController::class, 'updateExpense'])->name('budget.expenses.update');
+    Route::delete('/budget/expenses/{expense}', [BudgetController::class, 'destroyExpense'])->name('budget.expenses.destroy');
     
     // Task Management
-    Route::get('/tasks', [TaskController::class, 'index'])->name('tasks');
+    Route::get('/tasks', [TaskController::class, 'index'])->name('tasks.index');
+    Route::post('/tasks', [TaskController::class, 'store'])->name('tasks.store');
+    Route::put('/tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
+    Route::put('/tasks/{task}/status/{status}', [TaskController::class, 'updateStatus'])->name('tasks.status.update');
+    Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
     
     // Calendar View
     Route::get('/calendar', [CalendarController::class, 'index'])->name('calendar');

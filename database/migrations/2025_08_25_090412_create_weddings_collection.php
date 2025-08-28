@@ -1,4 +1,3 @@
-// database/migrations/YYYY_MM_DD_XXXXXX_create_weddings_collection.php
 <?php
 
 use Illuminate\Database\Migrations\Migration;

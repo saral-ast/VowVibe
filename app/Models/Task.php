@@ -11,7 +11,7 @@ class Task extends Model
     protected $collection = 'tasks';
 
     protected $fillable = [
-        'wedding_id', 'title', 'description', 'status', 'priority', 'dueDate',
+        'wedding_id', 'title', 'description', 'status', 'priority', 'due_date',
     ];
 
     public function wedding(): BelongsTo

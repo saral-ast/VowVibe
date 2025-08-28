@@ -69,6 +69,7 @@ export default function GuestManagement() {
   const stats = useMemo(() => ({
     total: guests.length,
     totalAttendees: guests.reduce((sum, g) => sum + (g.invite_status === 'confirmed' ? g.members_count : 0), 0),
+    totalIncludingMembers: guests.length + guests.reduce((sum, g) => sum + (g.members_count || 0), 0),
     confirmed: guests.filter(g => g.invite_status === 'confirmed').length,
     pending: guests.filter(g => g.invite_status === 'pending').length,
     declined: guests.filter(g => g.invite_status === 'declined').length,
@@ -145,15 +146,15 @@ export default function GuestManagement() {
   }, [editingGuest]);
   
   return (
-    <div className="p-6 space-y-6">
-      <div>
+    <div className="container mx-auto p-4">
+      <div >
         <h1 className="text-2xl font-bold">Guest Management</h1>
         <p className="text-muted-foreground">Manage your wedding guest list</p>
       </div>
 
       <GuestStats stats={stats} />
 
-      <Card>
+      <Card className="mb-4">
         <CardContent className="p-4">
           <div className="flex flex-col gap-4 sm:flex-row">
             <div className="relative flex-1">
@@ -176,7 +177,7 @@ export default function GuestManagement() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="mb-4">
         <CardHeader><CardTitle>Guest List ({filteredGuests.length})</CardTitle></CardHeader>
         <CardContent className="p-0">
           <GuestList guests={filteredGuests} onEdit={openFormForEdit} onDelete={handleDeleteClick} isMobile={isMobile} />

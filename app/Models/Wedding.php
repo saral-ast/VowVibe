@@ -36,4 +36,10 @@ class Wedding extends Model
     {
         return $this->hasMany(Task::class);
     }
+
+    // A Wedding has many BudgetCategories
+    public function budgetCategories()
+    {
+        return $this->hasMany(BudgetCategory::class);
+    }
 }
